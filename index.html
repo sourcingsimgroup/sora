@@ -84,6 +84,18 @@
     .toast.err{background:linear-gradient(135deg,#ef4444,#dc2626)}
 
     .footer{margin:18px 0 40px 0; text-align:center; color:var(--sub); font-size:12px}
+    /* Modal kirim */
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(2,8,23,.45);backdrop-filter:blur(2px)}
+    .modal .box{width:320px;max-width:90vw;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 16px 48px rgb(2 8 23 / .35);text-align:center}
+    .art{width:160px;height:130px;margin:0 auto 10px;position:relative}
+    .mailbox{position:absolute;left:50%;top:40%;transform:translate(-50%,-40%)}
+    .letter{position:absolute;left:50%;top:18%;transform:translate(-50%,-18%);animation:letterDrop 1.6s ease-in-out infinite}
+    @keyframes letterDrop{0%{transform:translate(-50%,-22%)}50%{transform:translate(-50%,-32%)}100%{transform:translate(-50%,-10%)} }
+    .modal.success .letter{animation:none;opacity:0}
+    .modal.success .check{opacity:1}
+    .check{opacity:0; width:56px; height:56px; margin:0 auto; border-radius:50%; border:3px solid #16a34a; display:grid; place-items:center}
+    .check svg{width:32px;height:32px;stroke:#16a34a}
   </style>
 </head>
 <body>
@@ -109,6 +121,38 @@
         <div>
           <label for="agent">Nama Agent</label>
           <input class="cap" id="agent" name="agent" type="text" placeholder="Nama agent" required autocomplete="name" />
+        </div>
+
+        <div>
+          <label for="job">Job Referal</label>
+          <select class="cap" id="job" name="job" required>
+            <option value="" disabled selected>Pilih job referal</option>
+            <option>ADMINISTRATION</option>
+            <option>BACK OFFICE</option>
+            <option>BEAUTICIAN</option>
+            <option>CLEANING</option>
+            <option>COLLECTION</option>
+            <option>CONTACT CENTER</option>
+            <option>CUSTOMER SERVICE</option>
+            <option>DRIVER</option>
+            <option>IT</option>
+            <option>KITCHEN</option>
+            <option>LABORAN</option>
+            <option>LEGAL</option>
+            <option>MANUFACTURE</option>
+            <option>MARKETING</option>
+            <option>MARKETING CREDIT</option>
+            <option>MEDICAL</option>
+            <option>MESSENGER</option>
+            <option>PROJECT MANAGEMENT</option>
+            <option>PUBLIC RELATION</option>
+            <option>SALES</option>
+            <option>SECURITY</option>
+            <option>SPV</option>
+            <option>TECHNICIAN</option>
+            <option>VERIFIER</option>
+            <option>WAREHOUSE</option>
+          </select>
         </div>
 
         <div>
@@ -212,6 +256,40 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <!-- Modal Loading / Success -->
+  <div id="sendingModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="box">
+      <div class="art">
+        <!-- Mailbox -->
+        <svg class="mailbox" width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="30" width="80" height="44" rx="10" fill="url(#g1)" stroke="#cbd5e1"/>
+          <rect x="58" y="30" width="6" height="50" fill="#94a3b8"/>
+          <rect x="38" y="40" width="44" height="8" rx="3" fill="#1f2937"/>
+          <defs>
+            <linearGradient id="g1" x1="20" y1="30" x2="100" y2="74" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f1f5f9"/>
+              <stop offset="1" stop-color="#e2e8f0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <!-- Letter -->
+        <svg class="letter" width="80" height="60" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="5" width="70" height="50" rx="6" fill="url(#g2)" stroke="#94a3b8"/>
+          <path d="M7 10 L40 34 L73 10" stroke="#64748b" fill="none"/>
+          <defs>
+            <linearGradient id="g2" x1="5" y1="5" x2="75" y2="55" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#ffffff"/>
+              <stop offset="1" stop-color="#e2e8f0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div id="modalTitle" style="font-weight:700;margin-top:6px">Mengirim data…</div>
+      <div id="modalSub" class="note">Mohon tunggu sebentar</div>
+    </div>
+  </div>
+
   <script>
     // 1) ======= CONFIG ————
     // Ganti URL berikut dengan Web App URL dari Google Apps Script Anda (Deploy > New Deployment > Web App)
@@ -298,11 +376,16 @@
 
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      if(!SCRIPT_URL.includes('script.google.com')){
-        toast('Konfigurasi belum diisi: SCRIPT_URL!', false);
-        return;
-      }
+      if(!SCRIPT_URL.includes('script.google.com')){ toast('Konfigurasi belum diisi: SCRIPT_URL!', false); return; }
       if(!form.reportValidity()){ return; }
+
+      // Show modal loading
+      const modal = document.getElementById('sendingModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSub = document.getElementById('modalSub');
+      modal.classList.remove('hidden','success');
+      modalTitle.textContent = 'Mengirim data…';
+      modalSub.textContent = 'Mohon tunggu sebentar';
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Mengirim…';
@@ -317,16 +400,22 @@
             fd.append('cv_base64', base64);
             fd.append('cv_name', file.name);
             fd.append('cv_type', file.type || 'application/octet-stream');
-          }catch(_){ /* abaikan fallback gagal */ }
+          }catch(_){ }
         }
 
         await fetch(SCRIPT_URL, { method:'POST', body:fd, mode:'no-cors' });
         form.reset();
         cvName.textContent = 'Belum ada file';
-        toast('Berhasil dikirim!', true);
+
+        // Success state
+        modal.classList.add('success');
+        modalTitle.textContent = 'Selamat, data berhasil dikirim!';
+        modalSub.textContent = '';
+        setTimeout(()=>{ modal.classList.add('hidden'); }, 1600);
       }catch(err){
         console.error(err);
-        toast('Gagal mengirim. Coba lagi.', false);
+        modalTitle.textContent = 'Gagal mengirim';
+        modalSub.textContent = 'Coba lagi beberapa saat.';
       }finally{
         submitBtn.disabled = false;
         submitBtn.textContent = 'Kirim';
@@ -363,8 +452,9 @@
 
       // Ambil field teks
       const agent     = e.parameter.agent || '';
+      const job       = e.parameter.job || '';
       const candidate = e.parameter.candidate || '';
-      const education = e.parameter.education || '';
+      const education = e.parameter.education || ''; = e.parameter.education || '';
       const address   = e.parameter.address || '';
       const province  = e.parameter.province || '';
       const phone     = e.parameter.phone || '';
@@ -394,9 +484,17 @@
         cvUrl = g.getUrl();
       }
 
-      // Tulis ke sheet (tambahkan header jika kosong)
+      // Tulis ke sheet (tambahkan/upgrade header)
+      const header = ['Timestamp','Nama Agent','Job Referal','Nama Kandidat','Pendidikan','Alamat','Provinsi','No HP','CV URL'];
       if (sh.getLastRow() === 0){
-        sh.appendRow(['Timestamp','Nama Agent','Nama Kandidat','Pendidikan','Alamat','Provinsi','No HP','CV URL']);
+        sh.appendRow(header);
+      } else {
+        const firstRow = sh.getRange(1,1,1,Math.max(sh.getLastColumn(), header.length)).getValues()[0];
+        if (firstRow.length < header.length || firstRow[2] !== 'Job Referal'){
+          sh.getRange(1,1,1,header.length).setValues([header]);
+        }
+      }
+      sh.appendRow([new Date(), agent, job, candidate, education, address, province, phone, cvUrl]);
       }
       sh.appendRow([new Date(), agent, candidate, education, address, province, phone, cvUrl]);
 
