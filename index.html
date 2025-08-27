@@ -105,7 +105,7 @@
   <main class="wrap" style="margin-top:14px">
     <section class="card">
       <h2>Formulir Pengajuan</h2>
-      <form id="soraForm" novalidate>
+      <form id="soraForm" novalidate enctype="multipart/form-data">
         <div>
           <label for="agent">Nama Agent</label>
           <input class="cap" id="agent" name="agent" type="text" placeholder="Nama agent" required autocomplete="name" />
@@ -274,6 +274,16 @@
       el._t = setTimeout(()=>{ el.style.display='none'; }, 2400);
     }
 
+    // Helper: convert File -> dataURL (base64)
+    function fileToDataURL(file){
+      return new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = ()=> resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
     // 4) ======= FORM HANDLER ————
     const form = document.getElementById('soraForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -294,12 +304,22 @@
       }
       if(!form.reportValidity()){ return; }
 
-      const fd = new FormData(form);
       submitBtn.disabled = true;
       submitBtn.textContent = 'Mengirim…';
 
       try{
-        // Using no-cors for broad compatibility with GAS
+        const fd = new FormData(form);
+        const file = cvEl.files && cvEl.files[0];
+        if(file){
+          try{
+            const dataUrl = await fileToDataURL(file);
+            const base64 = String(dataUrl).split(',')[1] || '';
+            fd.append('cv_base64', base64);
+            fd.append('cv_name', file.name);
+            fd.append('cv_type', file.type || 'application/octet-stream');
+          }catch(_){ /* abaikan fallback gagal */ }
+        }
+
         await fetch(SCRIPT_URL, { method:'POST', body:fd, mode:'no-cors' });
         form.reset();
         cvName.textContent = 'Belum ada file';
@@ -351,9 +371,9 @@
 
       // Upload file (jika ada)
       let cvUrl = '';
+      // Prefer native file upload (e.files), fallback to base64 fields (cv_base64)
       if (e.files && e.files.cv){
         const f = e.files.cv; // {length, name/filename, mimeType, bytes}
-        // e.files.cv bisa array jika multi-file. Tangani keduanya.
         const files = Array.isArray(f) ? f : [f];
         const folder = DRIVE_FOLDER_ID ? DriveApp.getFolderById(DRIVE_FOLDER_ID) : DriveApp.getRootFolder();
         const uploaded = files.map(file => {
@@ -363,6 +383,15 @@
           return g.getUrl();
         });
         cvUrl = uploaded.join(', ');
+      } else if (e.parameter.cv_base64 && (e.parameter.cv_name || e.parameter.cv_type)) {
+        const folder = DRIVE_FOLDER_ID ? DriveApp.getFolderById(DRIVE_FOLDER_ID) : DriveApp.getRootFolder();
+        const bytes = Utilities.base64Decode(e.parameter.cv_base64);
+        const mime = e.parameter.cv_type || 'application/octet-stream';
+        const name = e.parameter.cv_name || ('cv_' + Date.now());
+        const blob = Utilities.newBlob(bytes, mime, name);
+        const g = folder.createFile(blob);
+        g.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        cvUrl = g.getUrl();
       }
 
       // Tulis ke sheet (tambahkan header jika kosong)
