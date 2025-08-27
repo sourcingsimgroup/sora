@@ -98,15 +98,6 @@
           <h1>SORA</h1>
           <div class="sub">Sourcing Referral Agent</div>
         </div>
-        <button id="themeBtn" class="ghost-btn" title="Ganti tema warna" type="button" style="margin-left:auto">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2"/><path d="M12 19v2"/><path d="M3 12h2"/><path d="M19 12h2"/><path d="M5.6 5.6l1.4 1.4"/><path d="M17 17l1.4 1.4"/><path d="M17 7l1.4-1.4"/><path d="M5.6 18.4 7 17"/><circle cx="12" cy="12" r="4"/></svg>
-          <span>Ganti warna</span>
-        </button>
-      </div>
-      <div class="toolbar">
-        <span class="chip">Mobile Ready</span>
-        <span class="chip">Upload CV (PDF/DOC)</span>
-        <span class="chip">Auto Timestamp</span>
       </div>
     </div>
   </header>
@@ -323,7 +314,7 @@
     });
 
     // 5) ======= INIT ————
-    document.getElementById('themeBtn').addEventListener('click', cycleTheme);
+    const _tb = document.getElementById('themeBtn'); if(_tb){ _tb.addEventListener('click', cycleTheme); }
     document.getElementById('year').textContent = new Date().getFullYear();
     loadTheme();
   </script>
