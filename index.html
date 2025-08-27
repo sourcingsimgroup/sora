@@ -87,7 +87,9 @@
     .footer{margin:18px 0 40px 0; text-align:center; color:var(--sub); font-size:12px}
     /* Modal kirim */
     .hidden{display:none}
-    .modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(2,8,23,.35);backdrop-filter:blur(2px)}
+    .modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(2,8,23,.35);backdrop-filter:blur(1px)}
+    .modal.visible{display:flex}
+    .modal.hidden, .modal[hidden]{display:none !important}
     .modal .box{width:320px;max-width:90vw;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 16px 48px rgb(2 8 23 / .35);text-align:center}
     .art{width:160px;height:130px;margin:0 auto 10px;position:relative}
     .mailbox{position:absolute;left:50%;top:40%;transform:translate(-50%,-40%)}
@@ -384,8 +386,8 @@
     }
 
     // 4) ======= FORM HANDLER ————
-    function showModal(){ const m = document.getElementById('sendingModal'); m.classList.remove('hidden','success'); m.removeAttribute('hidden'); }
-    function hideModal(){ const m = document.getElementById('sendingModal'); m.classList.add('hidden'); m.setAttribute('hidden',''); }
+    function showModal(){ const m = document.getElementById('sendingModal'); m.classList.add('visible'); m.classList.remove('hidden','success'); m.removeAttribute('hidden'); }
+    function hideModal(){ const m = document.getElementById('sendingModal'); m.classList.remove('visible'); m.classList.add('hidden'); m.setAttribute('hidden',''); }
     const form = document.getElementById('soraForm');
     const submitBtn = document.getElementById('submitBtn');
     const cvEl = document.getElementById('cv');
